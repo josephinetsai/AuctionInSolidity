@@ -1,0 +1,6 @@
+User account: 
+User creates account using their email and links their wallet 
+User account on auction site can spend money from the linked wallet 
+User is given random 9 number/letter combination that is displayed during the bidding process, so that it is anonymous 
+only one account can be linked to a wallet 
+
