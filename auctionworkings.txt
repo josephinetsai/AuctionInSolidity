@@ -2,6 +2,7 @@ auction workings:
 
 - auctions start/go live once a day on the 'current' page/tab 
 - a week before the auction goes live, the user can see the items that are going up for sale
+- the items for sale have detailed pictures, and descriptions- users cannot message the seller or inquire about anything
   - each item has a description and no price estimate(lets say the value of the items being sold cannot be found on the internet) one can only guess the value by looking at it
   - in order to be able to bid, the user must confirm their intent by filling out a form that automatically includes their account info, and an amount of money- there is no maximum
       - that amount of money is what they have to spend on that item once it goes live, but they have to bid at least 20 percent of that money and at most the total amount of money they put down before hand
@@ -10,6 +11,7 @@ auction workings:
 once the auction goes live: 
 - each person only gets 5 bids 
 - the auction is a pure countdown and lasts the whole week 
+- the current high bid is displayed on the page- the user to whom it belongs to is not
 - once the clock reaches 0 whoever has the highest bid gets the item 
 - the higher the % spent of their input value, they get some extra reward token
 - loser's money is unchanged, still in their wallets 
