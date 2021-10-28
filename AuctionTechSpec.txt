@@ -21,7 +21,7 @@ Auctions Object
  - amntOfRewardToken()
 
 
- Auction Items Object
+ AuctionItems Object
  - forSale boolean
  - pictures variable
  - description variable
@@ -35,7 +35,8 @@ ConfirmIntentForm
 
 
  Current Page
- - Auctions Objects
+ - Auctions Objects - with Auctions.countdown displayed
+ 	- only live auctions displayed xs
 
 
  User Object
