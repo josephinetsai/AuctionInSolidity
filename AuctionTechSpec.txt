@@ -28,9 +28,21 @@ Auctions Object
  - value variable (not shown to user)
 
 ConfirmIntentForm
-- email String
-- wallet link String
-- unique ID (used for verification)
+- User email
+- User wallet link String
+- User unique ID (used for verification)
+- ConfirmGuessedValue - no ability to change it tho, just display it
 
 
  Current Page
+ - Auctions Objects
+
+
+ User Object
+- email
+- wallet link
+- linkAccount()
+- amntOfMoney - money available in wallet
+- uniqueID - random 9 number letter combo - this is displayed in bidding - no other info about self is displayed
+- accountLinked - if yes, no other accounts can be linked
+
