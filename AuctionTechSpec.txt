@@ -12,7 +12,6 @@ Auctions Object
  - winner() - returns current highest Bidder when countdown = 0
 
 
-
  Bid
  - bidAmount (bidAmount must have a min of guessedValue*.20 and max of guessedValue)
  - bidHigher() = changes bid amount and sends it to auction
