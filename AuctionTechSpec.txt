@@ -10,6 +10,7 @@ Auctions Object
  - countDown - time to when the auction becomes live, after live, countdown can run negative
  - currentHighestBid() (only value)
  - winner() - returns current highest Bidder when countdown = 0
+ - winnerPayment()
 
 
  Bid
@@ -35,7 +36,7 @@ ConfirmIntentForm
 
  Current Page
  - Auctions Objects - with Auctions.countdown displayed
- 	- only live auctions displayed xs
+ 	- only live auctions displayed 
 
 
  User Object
