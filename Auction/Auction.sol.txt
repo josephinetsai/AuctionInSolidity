@@ -12,9 +12,10 @@ contract Auction{
     address payable owner;
     uint startBlock;
     uint endBlock;
+    uint startPrice;
     uint highestBid;
-    IERC721 public immutable nft;
-    uint public immutable nftId;
+    IERC721 public nft;
+    uint public nftId;
     
     bool public canceled;
     address public highestBidder;
@@ -28,21 +29,23 @@ contract Auction{
     event LogCanceled();
     
     
-    constructor(address payable _owner, uint _startBlock, uint _endBlock, address _nft, uint _nftId) {
-        require(_startBlock < _endBlock, "Start must be less than end.");
-        require(_startBlock > block.number, "Start block must be in the future");
-
+    constructor(address payable _owner, uint _startPrice, uint daysFromNow) {
         owner = _owner;
-        startBlock = _startBlock;
-        endBlock = _endBlock;
+        startBlock = block.timestamp;
+        endBlock = block.timestamp+block.timestamp+(daysFromNow* 1 days);
+        startPrice=_startPrice;
+    }
+    
+    function setNFT(address _nft, uint _nftId) public {
         nft=IERC721(_nft);
         nftId = _nftId;
     }
      
     function bid(address buyer, uint bidIncrease) payable public hasFunds(bidIncrease) onlyNotOwner onlyAfterStart onlyBeforeEnd onlyNotCanceled{
         require(msg.value>0, "Must pay at least some WC");
-        
         uint newBid = bidList[msg.sender] + msg.value;
+        
+        require(newBid>startPrice, "Cannot bid less than starting amount");
         require(newBid>highestBid, "New bid must be higher than previous highest.");
         bidList[msg.sender] = newBid;
         
@@ -62,14 +65,10 @@ contract Auction{
         return true;
     }
     
-    function overrideStart() public onlyOwner onlyBeforeStart onlyNotCanceled{
-        startBlock=block.number;
-    }
-    
     function end() external payable onlyEnded{
         if(msg.sender==owner){
-            nft.transferFrom(owner, highestBidder, nftId);
-            owner.transfer(bidList[highestBidder]);
+            nft.safeTransferFrom(owner, highestBidder, nftId);
+            (payable(nft.ownerOf(nftId))).transfer(bidList[highestBidder]);
             emit LogWin(highestBidder, bidList[highestBidder]);
         }else if(msg.sender != highestBidder){
             uint withdrawalAmount=bidList[msg.sender];
