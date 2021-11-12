@@ -1,0 +1,126 @@
+// SPDX-License-Identifier: GPL-3.0
+
+
+pragma solidity >=0.8.9;
+
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+
+
+contract Auction{
+    
+    address payable owner;
+    uint startBlock;
+    uint endBlock;
+    uint highestBid;
+    IERC721 public immutable nft;
+    uint public immutable nftId;
+    
+    bool public canceled;
+    address public highestBidder;
+    mapping(address => uint256) public bidList;
+    bool ownerHasWithdrawn;
+    
+    
+    event LogBid(address bidder, uint bid, address highestBidder, uint highestBid);
+    event LogWin(address winner, uint purchasePrice);
+    event LogLoserWithdrawal(address loser, uint withdrawalAmount);
+    event LogCanceled();
+    
+    
+    constructor(address payable _owner, uint _startBlock, uint _endBlock, address _nft, uint _nftId) {
+        require(_startBlock < _endBlock, "Start must be less than end.");
+        require(_startBlock > block.number, "Start block must be in the future");
+
+        owner = _owner;
+        startBlock = _startBlock;
+        endBlock = _endBlock;
+        nft=IERC721(_nft);
+        nftId = _nftId;
+    }
+     
+    function bid(address buyer, uint bidIncrease) payable public hasFunds(bidIncrease) onlyNotOwner onlyAfterStart onlyBeforeEnd onlyNotCanceled{
+        require(msg.value>0, "Must pay at least some WC");
+        
+        uint newBid = bidList[msg.sender] + msg.value;
+        require(newBid>highestBid, "New bid must be higher than previous highest.");
+        bidList[msg.sender] = newBid;
+        
+        if (msg.sender != highestBidder) {
+             highestBidder = msg.sender;
+        }
+        highestBid = newBid;
+        
+        emit LogBid(msg.sender, newBid, highestBidder, highestBid);
+        return;
+        
+    }
+    
+    function cancelAuction() onlyOwner onlyBeforeEnd onlyNotCanceled public returns (bool success){
+        canceled = true;
+        emit LogCanceled();
+        return true;
+    }
+    
+    function overrideStart() public onlyOwner onlyBeforeStart onlyNotCanceled{
+        startBlock=block.number;
+    }
+    
+    function end() external payable onlyEnded{
+        if(msg.sender==owner){
+            nft.transferFrom(owner, highestBidder, nftId);
+            owner.transfer(bidList[highestBidder]);
+            emit LogWin(highestBidder, bidList[highestBidder]);
+        }else if(msg.sender != highestBidder){
+            uint withdrawalAmount=bidList[msg.sender];
+            require (withdrawalAmount>0,"Cannot withdraw zero WC");
+            bidList[msg.sender] = 0;
+            
+            (payable(msg.sender)).transfer(withdrawalAmount);
+            emit LogLoserWithdrawal(msg.sender, withdrawalAmount);
+        }
+        return;
+            
+    }
+    
+    
+    modifier onlyOwner {
+        require(owner == msg.sender, "You are not the owner.");
+        _;
+    }
+    
+     modifier onlyNotOwner {
+        require(owner != msg.sender, "Owner of listing cannot bid.");
+        _;
+    }
+    
+    modifier hasFunds(uint bid){
+        require(bid<=msg.sender.balance, "Insufficient funds.");
+        _;
+    }
+    
+    modifier onlyAfterStart {
+        require(block.number > startBlock, "Must wait for auction to start.");
+        _;
+    }
+    
+    modifier onlyBeforeStart {
+        require(block.number < startBlock, "Auction cannot already have started.");
+        _;
+    }
+    
+    modifier onlyBeforeEnd {
+        require(block.number < endBlock, "Auction is condluded. Cannot bid.");
+        _;
+    }
+    
+    modifier onlyNotCanceled {
+        require(canceled == false, "Auction cannot be canceled.");
+        _;
+    }
+    
+    modifier onlyEnded {
+        require(block.number > endBlock && canceled==true, "Listing must be concluded");
+        _;
+    }
+}

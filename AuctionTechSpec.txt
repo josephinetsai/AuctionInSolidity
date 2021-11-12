@@ -6,7 +6,7 @@ Auctions Object
  - isLive() 
  - guessedValue (can only input when isLive is false) - static
  - uses Bid Object in Bids dictionary
- 	- because a user always has to bid higher than thier last, only their highest bid is stored in the dictionary - the key is the users unique id and the value is thier bid
+ 	- because a user always has to bid higher than their last, only their highest bid is stored in the dictionary - the key is the users unique id and the value is their bid
  - countDown - time to when the auction becomes live, after live, countdown can run negative
  - currentHighestBid() (only value)
  - winner() - returns current highest Bidder when countdown = 0
@@ -16,7 +16,7 @@ Auctions Object
  Bid
  - bidAmount (bidAmount must have a min of guessedValue*.20 and max of guessedValue)
  - bidHigher() = changes bid amount and sends it to auction
- - lastBid - to view thier previous bidAmount
+ - lastBid - to view their previous bidAmount
  - percentOfGuess() - calculates the percentage of users guessed value that they bid 
  - amntOfRewardToken()
 
