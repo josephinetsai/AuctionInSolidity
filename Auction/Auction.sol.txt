@@ -16,17 +16,19 @@ contract Auction{
     uint highestBid;
     IERC721 public nft;
     uint public nftId;
+    int numBids;
     
     bool public canceled;
     address public highestBidder;
     mapping(address => uint256) public bidList;
-    bool ownerHasWithdrawn;
+    bool ownerHasWithdrawn=false;
     
     
     event LogBid(address bidder, uint bid, address highestBidder, uint highestBid);
     event LogWin(address winner, uint purchasePrice);
     event LogLoserWithdrawal(address loser, uint withdrawalAmount);
     event LogCanceled();
+    event LogDirectBuy(address buyer, uint purchase);
     
     
     constructor(address payable _owner, uint _startPrice, uint daysFromNow) {
@@ -34,29 +36,35 @@ contract Auction{
         startBlock = block.timestamp;
         endBlock = block.timestamp+block.timestamp+(daysFromNow* 1 days);
         startPrice=_startPrice;
+        numBids=0;
     }
     
-    function setNFT(address _nft, uint _nftId) public {
+    function setNFT(address _nft, uint _nftId) public onlyOwner{
         nft=IERC721(_nft);
         nftId = _nftId;
     }
      
-    function bid(address buyer, uint bidIncrease) payable public hasFunds(bidIncrease) onlyNotOwner onlyAfterStart onlyBeforeEnd onlyNotCanceled{
-        require(msg.value>0, "Must pay at least some WC");
-        uint newBid = bidList[msg.sender] + msg.value;
+    function bid(address buyer, uint bidIncrease) payable public hasFunds(bidIncrease) onlyNotOwner(buyer) onlyBeforeEnd onlyNotCanceled{
+        require(bidIncrease>0, "Must pay at least some WC");
+        uint newBid = bidList[buyer] + bidIncrease;
         
         require(newBid>startPrice, "Cannot bid less than starting amount");
         require(newBid>highestBid, "New bid must be higher than previous highest.");
-        bidList[msg.sender] = newBid;
+        bidList[buyer] = newBid;
         
-        if (msg.sender != highestBidder) {
-             highestBidder = msg.sender;
+        if (buyer != highestBidder) {
+             highestBidder = buyer;
         }
         highestBid = newBid;
         
-        emit LogBid(msg.sender, newBid, highestBidder, highestBid);
+        emit LogBid(buyer, newBid, highestBidder, highestBid);
+        numBids++;
         return;
         
+    }
+    
+    function getOwner() view public returns (address){
+        return owner;
     }
     
     function cancelAuction() onlyOwner onlyBeforeEnd onlyNotCanceled public returns (bool success){
@@ -66,9 +74,10 @@ contract Auction{
     }
     
     function end() external payable onlyEnded{
-        if(msg.sender==owner){
+        if(msg.sender==owner && ownerHasWithdrawn==false){
             nft.safeTransferFrom(owner, highestBidder, nftId);
             (payable(nft.ownerOf(nftId))).transfer(bidList[highestBidder]);
+            ownerHasWithdrawn=true;
             emit LogWin(highestBidder, bidList[highestBidder]);
         }else if(msg.sender != highestBidder){
             uint withdrawalAmount=bidList[msg.sender];
@@ -82,14 +91,30 @@ contract Auction{
             
     }
     
+    function directBuy(address buyer, uint purchase) public onlyEnded noBids onlyNotOwner(buyer) hasFunds(purchase){
+        uint priceStrike=3;
+        uint price=startPrice-priceStrike; //listed for direct purchase at less than auction price.
+        
+        require(purchase>=price,"Cannot bid less than price.");
+        
+        nft.safeTransferFrom(owner, buyer, nftId);
+        (payable(nft.ownerOf(nftId))).transfer(purchase);
+        emit LogDirectBuy(buyer, purchase);
+    }
+    
+    
+    modifier noBids {
+        require(numBids == 0, "No bids must have been made.");
+        _;
+    }
     
     modifier onlyOwner {
         require(owner == msg.sender, "You are not the owner.");
         _;
     }
     
-     modifier onlyNotOwner {
-        require(owner != msg.sender, "Owner of listing cannot bid.");
+     modifier onlyNotOwner(address bidder) {
+        require(owner != bidder, "Owner of listing cannot bid.");
         _;
     }
     
@@ -99,7 +124,7 @@ contract Auction{
     }
     
     modifier onlyAfterStart {
-        require(block.number > startBlock, "Must wait for auction to start.");
+        require(block.number >= startBlock-1, "Must wait for auction to start.");
         _;
     }
     
@@ -109,7 +134,7 @@ contract Auction{
     }
     
     modifier onlyBeforeEnd {
-        require(block.number < endBlock, "Auction is condluded. Cannot bid.");
+        require(block.number <= endBlock, "Auction is condluded. Cannot bid.");
         _;
     }
     
@@ -119,7 +144,13 @@ contract Auction{
     }
     
     modifier onlyEnded {
-        require(block.number > endBlock && canceled==true, "Listing must be concluded");
+        require(block.number >= endBlock || canceled==true, "Listing must be concluded");
         _;
     }
+    
+
+    
+    
+    
+    
 }
