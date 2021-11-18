@@ -74,19 +74,10 @@ contract Auction{
     }
     
     function end() external payable onlyEnded{
-        if(msg.sender==owner && ownerHasWithdrawn==false){
-            nft.safeTransferFrom(owner, highestBidder, nftId);
-            (payable(nft.ownerOf(nftId))).transfer(bidList[highestBidder]);
-            ownerHasWithdrawn=true;
-            emit LogWin(highestBidder, bidList[highestBidder]);
-        }else if(msg.sender != highestBidder){
-            uint withdrawalAmount=bidList[msg.sender];
-            require (withdrawalAmount>0,"Cannot withdraw zero WC");
-            bidList[msg.sender] = 0;
-            
-            (payable(msg.sender)).transfer(withdrawalAmount);
-            emit LogLoserWithdrawal(msg.sender, withdrawalAmount);
-        }
+        nft.safeTransferFrom(address(this), highestBidder, nftId);
+        ownerHasWithdrawn=true;
+        emit LogWin(highestBidder, bidList[highestBidder]);
+        
         return;
             
     }
